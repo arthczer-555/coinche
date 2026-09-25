@@ -1,56 +1,103 @@
-# Welcome to your Expo app 👋
+# Coinche
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Catégorie : Perso entreprenarial**
 
-## Get started
+Le "Strava de la belote coinchée" : une app mobile pour compter les points de ses parties, puis à terme un réseau social autour du jeu (profils, amis, fil d'activité, stats, classements).
 
-1. Install dependencies
+## État actuel (v0.1)
 
-   ```bash
-   npm install
-   ```
+Compteur de points complet, stocké localement sur le téléphone :
 
-2. Start the app
+- **Nouvelle partie** : noms des deux équipes (la sienne en premier, bouton pour inverser), score à atteindre (1000 / 1500 / 2000 ou libre).
+- **Saisie d'une mène** (modal) : équipe preneuse, contrat (80 à 160, capot, générale), atout facultatif (coeur, carreau, pique, trèfle, SA, TA ; n'influe pas sur le score), enchère (rien, coinché, surcoinché), fait ou chuté, belote-rebelote (oui/non, créditée à l'équipe qui prend), aperçu des points avant validation.
+- **Écran de partie** : gros score, progression vers l'objectif, numéro de la prochaine mène, tableau des mènes (contrat + symbole de l'atout s'il a été saisi) avec étiquettes (Fait, Chuté, Coinché, Belote), annulation de la dernière mène.
+- **Fin de partie** : vainqueur, courbe d'évolution du score, stats (coinches, capots, meilleure mène), revanche en un tap, partage du résultat.
+- **Fil** : stats globales, carte de la partie en cours, parties terminées façon Strava.
+- **Profil** : parties, mènes, % de parties gagnées, % de mènes gagnées, coinches, capots. Les victoires (Fil et Profil) sont comptées du point de vue de l'équipe 1, qui doit être celle du propriétaire du téléphone.
 
-   ```bash
-   npx expo start
-   ```
+### Règles de score
 
-In the output, you'll find options to open the app in a
+| Cas | Points |
+|---|---|
+| Contrat fait | l'équipe preneuse marque son contrat (x2 coinché, x4 surcoinché) |
+| Contrat chuté | la défense marque 160 (320 coinché, 640 surcoinché) |
+| Capot | vaut 250 points |
+| Générale | capot réalisé par un seul joueur, vaut 500 points |
+| Belote-rebelote | toujours comptée : +20 pour l'équipe qui prend, même si le contrat chute |
+| Fin de partie | la première équipe à atteindre l'objectif gagne. Si les deux le dépassent sur la même mène, le plus gros score gagne (égalité : on continue) |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Toute la logique est dans `src/features/coinche/scoring.ts` (fonctions pures).
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Stack
 
-## Get a fresh project
+- Expo SDK 57, React Native, TypeScript
+- Expo Router (stack + onglets headless `expo-router/ui` avec tab bar custom)
+- Zustand + AsyncStorage pour la persistance locale (store versionné, migration v1 vers v2)
+- react-native-svg (icônes, symboles de cartes, graphique), Fraunces arrondie (fichiers dans `assets/fonts/`) pour les titres et scores, Figtree (`@expo-google-fonts/figtree`) pour le texte
 
-When you're ready, run:
+## Structure
 
-```bash
-npm run reset-project
+```
+src/
+  app/                      # routes (Expo Router)
+    _layout.tsx             # stack racine
+    (tabs)/                 # Fil, Jouer, Profil
+    game/[id]/index.tsx     # écran de partie
+    game/[id]/round.tsx     # saisie d'une mène (modal)
+    game/[id]/result.tsx    # fin de partie (plein écran)
+  features/coinche/         # domaine "coinche" : types, scoring, store, composants (score, mènes, cartes, graphique)
+  components/               # UI partagée (Button, Icon, Card, Segmented, OptionChip, ToggleRow, Tag, Screen, Section, AppTabs)
+  constants/theme.ts        # palette, polices, espacements, rayons
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Le domaine coinche est isolé dans `src/features/coinche/` pour que l'app sociale se construise autour (futurs `features/auth`, `features/social`, `features/profile`...). Les modèles ont déjà des ids stables, des dates ISO et des `playerIds` par équipe pour une future synchro backend.
 
-### Other setup steps
+## Lancer
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm install
+npx expo start      # puis scanner le QR code avec Expo Go, ou "w" pour le web
+npx tsc --noEmit    # typecheck
+```
 
-## Learn more
+## Publication iOS
 
-To learn more about developing your project with Expo, look at the following resources:
+Bundle ID `com.czernichow.coinche` (définitif une fois l'app créée dans App Store Connect). Build local via Xcode :
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo prebuild -p ios --clean   # régénère ios/ depuis app.json (ne jamais éditer ios/ à la main)
+xed ios                            # puis Product > Archive, destination "Any iOS Device"
+```
 
-## Join the community
+À chaque nouvel envoi, incrémenter `ios.buildNumber` dans `app.json` (et `version` pour une nouvelle version publique), puis refaire le prebuild.
 
-Join our community of developers creating universal apps.
+### Site (GitHub Pages)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Le dossier `docs/` contient le mini-site statique servi par GitHub Pages (Settings > Pages > branche par défaut, dossier `/docs`) :
+
+- `index.html` : présentation + FAQ support, sert d'**URL de support** dans App Store Connect.
+- `confidentialite.html` : **politique de confidentialité** (aucune donnée collectée, tout reste en local). À mettre à jour avant d'ajouter comptes/backend.
+- `style.css` : reprend les tokens "Bistrot" de `src/constants/theme.ts`.
+
+## Design
+
+Le design compte. Direction **"Bistrot"** : l'univers "tapis de cartes" crème et vert forêt, poussé vers quelque chose de plus ludique (choisi parmi trois pistes, entre l'ancienne version sobre et une maquette très "gaming").
+
+- Fond crème `#F3EDE1`, cartes crème clair `#FFFBF4`, vert forêt `#1F4D3A` en couleur principale, moutarde `#F2B632` pour les accents (reprendre la partie, belote, trophée).
+- Équipe 1 = coeur, tomate `#E0482F`. Équipe 2 = pique, bleu roi `#2C4DB5`.
+- Effet "autocollant" : contour encre 2px + ombre décalée pleine (`Sticker`, `StickerSmall` dans `theme.ts`, via `boxShadow`). Au tap, le bloc "s'enfonce" (`StickerPressed`). À réserver aux blocs et boutons, pas aux petits éléments.
+- Écran de partie : chaque score est une carte à jouer (symbole en coin), celle de l'équipe qui mène penche.
+- Titres et scores en **Fraunces Black arrondie** (instance statique SOFT 100 / WONK 1 générée depuis la police variable, dans `assets/fonts/`), texte courant en **Figtree** (la famille suit le `fontWeight`, géré dans `ThemedText`).
+- Tab bar flottante noire en pilule avec le bouton "Jouer" (pique rouge) au centre.
+- Thème clair uniquement pour l'instant (`userInterfaceStyle: light`). Tous les tokens sont dans `src/constants/theme.ts`.
+- Icône de l'app : broc de pastis en plexi translucide, pastis jaune pâle et logo "PASTIS 51" au centre, sur fond blanc (`assets/images/icon.png`, déclinée en foreground/monochrome Android, splash et favicon). Style volontairement basique. Attention : le logo 51 est une marque déposée, risque de refus en cas de publication sur les stores.
+
+## Roadmap
+
+- [ ] Comptes utilisateurs + backend (Supabase ou équivalent)
+- [ ] Joueurs rattachés aux équipes, stats par joueur et par binôme
+- [ ] Fil social : parties des amis, likes, commentaires
+- [ ] Classements entre potes, badges, records
+- [ ] Saisie optionnelle des points réellement faits (variante "points faits + annonce")
+- [ ] Thème sombre
+- [ ] Écran de réglages (la roue du Fil mène au Profil pour l'instant)

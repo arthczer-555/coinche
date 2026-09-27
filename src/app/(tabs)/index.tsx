@@ -1,164 +1,167 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
 import { Card } from '@/components/card';
 import { Screen } from '@/components/screen';
 import { Section } from '@/components/section';
+import { Segmented } from '@/components/segmented';
 import { ThemedText } from '@/components/themed-text';
-import { Colors, Spacing } from '@/constants/theme';
-import { FinishedGameCard, OngoingGameCard } from '@/features/coinche/components/game-card';
-import { SuitIcon } from '@/features/coinche/components/suit-icon';
-import { gameStats, isFinished } from '@/features/coinche/scoring';
-import { sortGames, useGames } from '@/features/coinche/store';
+import { Colors, Fonts, MaxFontScale, Radius, Spacing, Sticker } from '@/constants/theme';
+import { TeamBadge } from '@/features/coinche/components/suit-icon';
+import { TARGET_PRESETS } from '@/features/coinche/scoring';
+import { useGames } from '@/features/coinche/store';
+import type { TeamId } from '@/features/coinche/types';
 
-const FINISHED_PREVIEW = 3;
+type TargetOption = number | 'custom';
 
-/**
- * Fil d'activité. Pour l'instant : les parties jouées sur ce téléphone.
- * Plus tard : les parties des amis, likes, commentaires.
- */
-export default function FeedScreen() {
-  const gamesById = useGames((s) => s.games);
-  const games = useMemo(() => sortGames(gamesById), [gamesById]);
-  const ongoing = games.filter((g) => !isFinished(g));
-  const finished = games.filter(isFinished);
-  const [showAll, setShowAll] = useState(false);
+const TARGET_OPTIONS: { value: TargetOption; label: string }[] = [
+  ...TARGET_PRESETS.map((value) => ({ value, label: String(value) })),
+  { value: 'custom', label: 'Autre' },
+];
 
-  // Sans comptes, "victoires" = parties gagnées par l'équipe 1 (celle du propriétaire du téléphone).
-  const stats = useMemo(
-    () => ({
-      games: games.length,
-      wins: finished.filter((g) => g.winner === 'A').length,
-      capots: games.reduce((n, g) => n + gameStats(g).capots, 0),
-    }),
-    [games, finished],
-  );
+export default function PlayScreen() {
+  const createGame = useGames((s) => s.createGame);
+
+  const [teamA, setTeamA] = useState('');
+  const [teamB, setTeamB] = useState('');
+  const [target, setTarget] = useState<TargetOption>(TARGET_PRESETS[0]);
+  const [customTarget, setCustomTarget] = useState('');
+
+  const targetScore = target === 'custom' ? Number.parseInt(customTarget, 10) : target;
+  const isValid = Number.isFinite(targetScore) && targetScore > 0;
+
+  function swapTeams() {
+    setTeamA(teamB);
+    setTeamB(teamA);
+  }
+
+  function start() {
+    if (!isValid) return;
+    const id = createGame({ teamA, teamB, targetScore });
+    setTeamA('');
+    setTeamB('');
+    setCustomTarget('');
+    router.push({ pathname: '/game/[id]', params: { id } });
+  }
 
   return (
-    <Screen withTabInset>
-      <View style={styles.header}>
-        <View>
-          <ThemedText type="caption" themeColor="textSecondary">
-            Coinche
-          </ThemedText>
-          <ThemedText type="title">Fil</ThemedText>
-        </View>
-        <IconButton name="settings" accessibilityLabel="Profil et réglages" onPress={() => router.navigate('/profile')} />
+    <Screen
+      withTabInset
+      footer={<Button label="Distribuer" trailingIcon="arrow-right" onPress={start} disabled={!isValid} />}>
+      <View>
+        <ThemedText type="title">Nouvelle partie</ThemedText>
+        <ThemedText themeColor="textSecondary">Qui s’assoit à la table ?</ThemedText>
       </View>
 
-      {games.length === 0 ? (
-        <Card style={styles.empty}>
-          <View style={styles.emptySuits}>
-            <SuitIcon suit="hearts" size={22} />
-            <SuitIcon suit="spades" size={22} />
-            <SuitIcon suit="diamonds" size={22} />
-            <SuitIcon suit="clubs" size={22} />
-          </View>
-          <ThemedText type="heading" style={styles.center}>
-            Aucune partie pour l’instant
-          </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.center}>
-            Lance ta première partie, les scores apparaîtront ici.
-          </ThemedText>
-          <Button
-            label="Nouvelle partie"
-            trailingIcon="arrow-right"
-            onPress={() => router.navigate('/play')}
-            style={styles.emptyButton}
+      <Card style={styles.teams}>
+        <View style={styles.teamInputs}>
+          <TeamInput team="A" label="Équipe 1" value={teamA} onChangeText={setTeamA} placeholder="Nous" />
+          <View style={styles.separator} />
+          <TeamInput team="B" label="Équipe 2" value={teamB} onChangeText={setTeamB} placeholder="Eux" />
+        </View>
+        <IconButton name="swap" variant="muted" size={36} accessibilityLabel="Inverser les équipes" onPress={swapTeams} />
+      </Card>
+
+      <Section title="Score à atteindre">
+        <Segmented options={TARGET_OPTIONS} value={target} onChange={setTarget} />
+        {target === 'custom' ? (
+          <TextInput
+            value={customTarget}
+            onChangeText={(text) => setCustomTarget(text.replace(/[^0-9]/g, ''))}
+            placeholder="Ex : 3000"
+            placeholderTextColor={Colors.textTertiary}
+            keyboardType="number-pad"
+            autoFocus
+            style={styles.customInput}
+            maxLength={5}
+            maxFontSizeMultiplier={MaxFontScale}
           />
-        </Card>
-      ) : (
-        <>
-          <Card style={styles.stats}>
-            <Stat value={stats.games} label="parties" />
-            <View style={styles.statDivider} />
-            <Stat value={stats.wins} label="victoires" />
-            <View style={styles.statDivider} />
-            <Stat value={stats.capots} label="capots" />
-          </Card>
-
-          {ongoing.map((game) => (
-            <OngoingGameCard key={game.id} game={game} />
-          ))}
-
-          {finished.length > 0 ? (
-            <Section
-              large
-              title="Terminées"
-              action={
-                finished.length > FINISHED_PREVIEW
-                  ? { label: showAll ? 'Réduire' : 'Tout voir', onPress: () => setShowAll((v) => !v) }
-                  : undefined
-              }>
-              <View style={styles.list}>
-                {(showAll ? finished : finished.slice(0, FINISHED_PREVIEW)).map((game) => (
-                  <FinishedGameCard key={game.id} game={game} />
-                ))}
-              </View>
-            </Section>
-          ) : null}
-        </>
-      )}
+        ) : null}
+      </Section>
     </Screen>
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function TeamInput({
+  team,
+  label,
+  value,
+  onChangeText,
+  placeholder,
+}: {
+  team: TeamId;
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+}) {
   return (
-    <View style={styles.stat}>
-      <ThemedText type="heading" style={styles.statValue}>
-        {value}
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
+    <View style={styles.teamRow}>
+      <TeamBadge team={team} />
+      <View style={styles.teamText}>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.teamLabel}>
+          {label}
+        </ThemedText>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.text}
+          style={styles.teamInput}
+          maxLength={24}
+          maxFontSizeMultiplier={MaxFontScale}
+          returnKeyType="done"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
+  teams: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
   },
-  stats: {
-    flexDirection: 'row',
-    paddingVertical: Spacing.two + Spacing.one,
-    paddingHorizontal: Spacing.two,
-  },
-  stat: {
+  teamInputs: {
     flex: 1,
-    alignItems: 'center',
   },
-  statValue: {
-    fontVariant: ['tabular-nums'],
-  },
-  statDivider: {
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.one,
-  },
-  list: {
-    gap: Spacing.two + Spacing.one,
-  },
-  empty: {
-    alignItems: 'center',
-    gap: Spacing.two,
-    padding: Spacing.four,
-  },
-  emptySuits: {
+  teamRow: {
     flexDirection: 'row',
-    gap: Spacing.two,
-    marginBottom: Spacing.one,
+    alignItems: 'center',
+    gap: Spacing.three,
+    paddingVertical: Spacing.two,
   },
-  center: {
-    textAlign: 'center',
+  teamText: {
+    flex: 1,
   },
-  emptyButton: {
-    alignSelf: 'stretch',
-    marginTop: Spacing.two,
+  teamLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  teamInput: {
+    fontSize: 17,
+    fontFamily: Fonts.body[700],
+    color: Colors.text,
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.border,
+    marginLeft: 36 + Spacing.three,
+  },
+  customInput: {
+    minHeight: 48,
+    borderRadius: Radius.medium,
+    backgroundColor: Colors.surface,
+    ...Sticker,
+    paddingHorizontal: Spacing.three,
+    fontSize: 17,
+    fontFamily: Fonts.body[700],
+    color: Colors.text,
   },
 });

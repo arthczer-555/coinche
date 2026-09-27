@@ -7,16 +7,8 @@ import { Section } from '@/components/section';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Radius, Spacing, Sticker } from '@/constants/theme';
 import { SuitIcon } from '@/features/coinche/components/suit-icon';
-import { gameStats, isFinished } from '@/features/coinche/scoring';
+import { gameStats, isFinished, MY_TEAM, percent } from '@/features/coinche/scoring';
 import { useGames } from '@/features/coinche/store';
-import type { TeamId } from '@/features/coinche/types';
-
-/** Équipe du joueur : l'équipe 1 (« Nous ») tant qu'il n'y a pas de comptes. */
-const MY_TEAM: TeamId = 'A';
-
-function percent(part: number, total: number): string {
-  return `${total ? Math.round((part / total) * 100) : 0}%`;
-}
 
 /**
  * Profil. Les stats sont calculées sur toutes les parties locales, du point de vue de l'équipe 1.
@@ -44,7 +36,7 @@ export default function ProfileScreen() {
   return (
     <Screen withTabInset>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerText}>
           <ThemedText type="caption" themeColor="textSecondary">
             Coinche
           </ThemedText>
@@ -102,6 +94,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: Spacing.three,
+  },
+  headerText: {
+    flexShrink: 1,
   },
   avatar: {
     width: 60,

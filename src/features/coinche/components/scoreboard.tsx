@@ -51,7 +51,7 @@ function TeamCard({ game, team, points, leader }: { game: Game; team: TeamId; po
       <ThemedText type="smallBold" numberOfLines={1} style={styles.center}>
         {game.teams[team].name}
       </ThemedText>
-      <ThemedText type="display" numberOfLines={1} adjustsFontSizeToFit style={[styles.points, { color }]}>
+      <ThemedText type="display" numberOfLines={1} adjustsFontSizeToFit style={[styles.points, points >= 1000 && styles.pointsLong, { color }]}>
         {points}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     paddingTop: Spacing.three + Spacing.one,
     paddingBottom: Spacing.five,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
   },
   lead: {
     transform: [{ rotate: '-2deg' }],
@@ -106,6 +106,9 @@ const styles = StyleSheet.create({
     fontSize: 52,
     lineHeight: 58,
     textAlign: 'center',
+  },
+  pointsLong: {
+    fontSize: 42,
   },
   track: {
     alignSelf: 'stretch',

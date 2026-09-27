@@ -59,6 +59,8 @@ export function OptionChip({
       {label ? (
         <ThemedText
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
           style={[styles.label, size === 'large' && styles.largeLabel, { color: textColor }]}>
           {label}
         </ThemedText>

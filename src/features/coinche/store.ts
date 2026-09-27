@@ -117,33 +117,28 @@ export const useGames = create<GamesState>()(
     {
       name: 'coinche-games',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 5,
+      version: 6,
       migrate: (persisted, version) => {
         const state = persisted as { games: Record<string, Game> };
-        if (version < 2) {
-          // v1 : pas d'atout ni de belote.
-          for (const game of Object.values(state.games ?? {})) {
-            game.rounds = game.rounds.map((round) => ({ ...round, belote: null }));
-          }
-        }
         if (version < 3) {
-          // v2 : règles activables (belote, annonces) et premier donneur. La belote compte toujours désormais,
-          // les annonces et la donne disparaissent. Belote ignorée si la règle était désactivée.
+          // v2 : règles activables et premier donneur, annonces par mène. Tout disparaît.
           for (const game of Object.values(state.games ?? {})) {
-            const legacy = game as Game & { rules?: { belote: boolean }; firstDealer?: TeamId };
-            const beloteCounted = legacy.rules?.belote ?? false;
+            const legacy = game as Game & { rules?: unknown; firstDealer?: TeamId };
             delete legacy.rules;
             delete legacy.firstDealer;
-            game.rounds = game.rounds.map(({ announcements: _announcements, ...round }: Round & { announcements?: unknown }) => ({
-              ...round,
-              belote: beloteCounted ? round.belote : null,
-            }));
+            game.rounds = game.rounds.map(({ announcements: _announcements, ...round }: Round & { announcements?: unknown }) => round);
           }
         }
         if (version < 5) {
           // v3 : atout saisi, v4 : atout retiré. Il revient en saisie facultative, on repart de zéro.
           for (const game of Object.values(state.games ?? {})) {
             game.rounds = game.rounds.map((round) => ({ ...round, trump: null }));
+          }
+        }
+        if (version < 6) {
+          // v5 : belote-rebelote supprimée, ses 20 points ne comptent plus.
+          for (const game of Object.values(state.games ?? {})) {
+            game.rounds = game.rounds.map(({ belote: _belote, ...round }: Round & { belote?: unknown }) => round);
           }
         }
         return state as GamesState;

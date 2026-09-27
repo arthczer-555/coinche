@@ -108,6 +108,11 @@ export const Spacing = {
 /** Hauteur de la tab bar flottante (sa marge basse dépend de la safe area). */
 export const TabBarHeight = 64;
 export const MaxContentWidth = 640;
+/**
+ * Grossissement max appliqué par le réglage "Taille du texte" du téléphone.
+ * Au-delà, les éléments à taille fixe (tab bar, pastilles, scores) cassent.
+ */
+export const MaxFontScale = 1.4;
 
 export const Radius = {
   small: 10,

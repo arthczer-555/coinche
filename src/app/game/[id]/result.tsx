@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { Share, StyleSheet, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
@@ -20,6 +21,7 @@ export default function ResultScreen() {
   if (!game || !isFinished(game)) {
     return (
       <Screen edges={['top', 'bottom']} backgroundColor={Colors.primary}>
+        <StatusBar style="light" />
         <ThemedText themeColor="onPrimary">Cette partie n’est pas terminée.</ThemedText>
         <Button label="Retour" variant="secondary" onPress={router.back} />
       </Screen>
@@ -65,6 +67,8 @@ export default function ResultScreen() {
       backgroundColor={Colors.primary}
       header={
         <View style={styles.header}>
+          {/* Fond vert foncé : texte de la barre d'état en clair (le layout racine le remet en sombre). */}
+          <StatusBar style="light" />
           <IconButton name="x" variant="onDark" size={36} accessibilityLabel="Fermer" onPress={router.back} />
         </View>
       }

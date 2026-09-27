@@ -50,7 +50,6 @@ export function RoundRow({ game, round, index }: { game: Game; round: Round; ind
         <View style={styles.tags}>
           <Tag label={round.made ? 'Fait' : 'Chuté'} tone={round.made ? 'success' : 'danger'} />
           {round.coinche !== 'none' ? <Tag label={COINCHE_LABEL[round.coinche]} tone="warning" /> : null}
-          {round.belote ? <Tag label="Belote" /> : null}
         </View>
       </View>
 

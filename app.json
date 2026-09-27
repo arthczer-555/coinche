@@ -9,10 +9,19 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.czernichow.coinche",
+      "appleTeamId": "C49X7A285F",
       "buildNumber": "1",
-      "supportsTablet": false,
+      "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
       }
     },
     "android": {

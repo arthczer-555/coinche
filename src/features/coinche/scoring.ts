@@ -5,7 +5,6 @@ export const BID_VALUES: Bid[] = [80, 90, 100, 110, 120, 130, 140, 150, 160, 'ca
 export const CAPOT_POINTS = 250;
 export const GENERALE_POINTS = 500;
 export const CHUTE_POINTS = 160;
-export const BELOTE_POINTS = 20;
 export const TARGET_PRESETS = [1000, 1500, 2000];
 
 export const COINCHE_MULTIPLIER: Record<Coinche, number> = {
@@ -13,6 +12,9 @@ export const COINCHE_MULTIPLIER: Record<Coinche, number> = {
   coinche: 2,
   surcoinche: 4,
 };
+
+/** Équipe du joueur : l'équipe 1 (« Nous ») tant qu'il n'y a pas de comptes. */
+export const MY_TEAM: TeamId = 'A';
 
 export function otherTeam(team: TeamId): TeamId {
   return team === 'A' ? 'B' : 'A';
@@ -30,13 +32,13 @@ export function formatBid(bid: Bid): string {
   return String(bid);
 }
 
-export type RoundInput = Pick<Round, 'bidder' | 'bid' | 'coinche' | 'made' | 'belote'>;
+export type RoundInput = Pick<Round, 'bidder' | 'bid' | 'coinche' | 'made'>;
 
 /**
  * Points marqués par chaque équipe sur une mène.
  * - Contrat fait : l'équipe preneuse marque son annonce (x2 coinché, x4 surcoinché).
  * - Contrat chuté : la défense marque 160 (320 coinché, 640 surcoinché).
- * - Belote-rebelote : +20 pour l'équipe qui l'annonce, même si le contrat chute.
+ * - Pas de belote-rebelote.
  */
 export function scoreRound(round: RoundInput): Score {
   const score: Score = { A: 0, B: 0 };
@@ -46,10 +48,6 @@ export function scoreRound(round: RoundInput): Score {
     score[round.bidder] += bidPoints(round.bid) * multiplier;
   } else {
     score[otherTeam(round.bidder)] += CHUTE_POINTS * multiplier;
-  }
-
-  if (round.belote) {
-    score[round.belote] += BELOTE_POINTS;
   }
 
   return score;
@@ -101,9 +99,13 @@ export function leader(game: Game): TeamId | null {
   return score.A > score.B ? 'A' : 'B';
 }
 
-/** Équipe qui remporte la mène : le preneur s'il fait son contrat, la défense sinon (belote ignorée). */
+/** Équipe qui remporte la mène : le preneur s'il fait son contrat, la défense sinon. */
 export function roundWinner(round: Pick<Round, 'bidder' | 'made'>): TeamId {
   return round.made ? round.bidder : otherTeam(round.bidder);
+}
+
+export function percent(part: number, total: number): string {
+  return `${total ? Math.round((part / total) * 100) : 0}%`;
 }
 
 export type GameStats = {
@@ -112,6 +114,7 @@ export type GameStats = {
   roundsWon: Score;
   contractsMade: number;
   coinches: number;
+  /** Capots et générales réussis par mon équipe (MY_TEAM). */
   capots: number;
   /** Plus gros gain d'une équipe sur une seule mène. */
   bestRound: number;
@@ -126,7 +129,9 @@ export function gameStats(game: Game): GameStats {
     },
     contractsMade: game.rounds.filter((r) => r.made).length,
     coinches: game.rounds.filter((r) => r.coinche !== 'none').length,
-    capots: game.rounds.filter((r) => r.bid === 'capot' || r.bid === 'generale').length,
+    capots: game.rounds.filter(
+      (r) => r.bidder === MY_TEAM && r.made && (r.bid === 'capot' || r.bid === 'generale'),
+    ).length,
     bestRound: game.rounds.reduce((best, r) => {
       const s = scoreRound(r);
       return Math.max(best, s.A, s.B);

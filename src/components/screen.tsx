@@ -1,11 +1,14 @@
 import { ScrollView, StyleSheet, View, type ScrollViewProps } from 'react-native';
-import { useSafeAreaInsets, type Edge } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, MaxContentWidth, Spacing, TabBarHeight } from '@/constants/theme';
 
 type ScreenProps = ScrollViewProps & {
-  /** Bords protégés par la safe area. Par défaut : haut uniquement (écrans d'onglet). */
-  edges?: Edge[];
+  /**
+   * Bords verticaux protégés par la safe area. Par défaut : haut uniquement (écrans d'onglet).
+   * Les bords gauche/droite sont toujours protégés (encoche en paysage sur tablette ou pliable).
+   */
+  edges?: ('top' | 'bottom')[];
   /** Laisse la place de la tab bar flottante sous le contenu (ou sous le footer). */
   withTabInset?: boolean;
   /** En-tête fixe au-dessus du contenu scrollable. */
@@ -31,13 +34,17 @@ export function Screen({
   const safeAreaPadding = {
     paddingTop: edges.includes('top') ? insets.top : 0,
     paddingBottom: edges.includes('bottom') ? insets.bottom : 0,
-    paddingLeft: edges.includes('left') ? insets.left : 0,
-    paddingRight: edges.includes('right') ? insets.right : 0,
+    paddingLeft: insets.left,
+    paddingRight: insets.right,
   };
 
   return (
     <View style={[styles.safeArea, safeAreaPadding, { backgroundColor }]}>
-      {header ? <View style={styles.header}>{header}</View> : null}
+      {header ? (
+        <View style={styles.header}>
+          <View style={styles.inner}>{header}</View>
+        </View>
+      ) : null}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

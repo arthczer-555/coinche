@@ -32,8 +32,6 @@ export type Round = {
   coinche: Coinche;
   /** Contrat réalisé ou chuté. */
   made: boolean;
-  /** Équipe créditée de la belote-rebelote (l'équipe qui prend à la saisie), s'il y en a eu une. */
-  belote: TeamId | null;
   createdAt: string;
 };
 

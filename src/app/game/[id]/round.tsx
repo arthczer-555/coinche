@@ -3,13 +3,11 @@ import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
-import { Card } from '@/components/card';
 import { OptionChip } from '@/components/option-chip';
 import { Screen } from '@/components/screen';
 import { Section } from '@/components/section';
 import { Segmented } from '@/components/segmented';
 import { ThemedText } from '@/components/themed-text';
-import { ToggleRow } from '@/components/toggle-row';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { SuitIcon } from '@/features/coinche/components/suit-icon';
 import { BID_VALUES, formatBid, scoreRound, totalScore } from '@/features/coinche/scoring';
@@ -45,8 +43,6 @@ export default function RoundScreen() {
   const [trump, setTrump] = useState<Suit | null>(null);
   const [coinche, setCoinche] = useState<Coinche>('none');
   const [made, setMade] = useState(true);
-  /** La belote-rebelote est toujours comptée pour l'équipe qui prend. */
-  const [belote, setBelote] = useState(false);
 
   if (!game) {
     return (
@@ -57,7 +53,7 @@ export default function RoundScreen() {
   }
 
   const score = totalScore(game);
-  const draft = bidder !== null && bid !== null ? { bidder, bid, trump, coinche, made, belote: belote ? bidder : null } : null;
+  const draft = bidder !== null && bid !== null ? { bidder, bid, trump, coinche, made } : null;
   const preview = draft ? scoreRound(draft) : null;
 
   function submit() {
@@ -77,11 +73,11 @@ export default function RoundScreen() {
         <View>
           {Platform.OS === 'ios' ? <View style={styles.grabber} /> : null}
           <View style={styles.header}>
-            <View>
+            <View style={styles.headerText}>
               <ThemedText type="heading" style={styles.title}>
                 Mène {game.rounds.length + 1}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
                 {game.teams.A.name} {score.A} · {game.teams.B.name} {score.B}
               </ThemedText>
             </View>
@@ -177,15 +173,6 @@ export default function RoundScreen() {
           selectedText={Colors.onPrimary}
         />
       </Section>
-
-      <Card>
-        <ToggleRow
-          title="Belote-rebelote"
-          subtitle="+20 pour l’équipe qui prend"
-          value={belote}
-          onValueChange={setBelote}
-        />
-      </Card>
     </Screen>
   );
 }
@@ -203,7 +190,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: Spacing.three,
     paddingTop: Spacing.two,
+  },
+  headerText: {
+    flexShrink: 1,
   },
   title: {
     fontSize: 26,
@@ -224,6 +215,7 @@ const styles = StyleSheet.create({
   cell: {
     flexBasis: '18%',
     flexGrow: 1,
+    paddingHorizontal: Spacing.one,
   },
   footer: {
     gap: Spacing.two + Spacing.one,

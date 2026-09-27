@@ -9,11 +9,11 @@ Le "Strava de la belote coinchée" : une app mobile pour compter les points de s
 Compteur de points complet, stocké localement sur le téléphone :
 
 - **Nouvelle partie** : noms des deux équipes (la sienne en premier, bouton pour inverser), score à atteindre (1000 / 1500 / 2000 ou libre).
-- **Saisie d'une mène** (modal) : équipe preneuse, contrat (80 à 160, capot, générale), atout facultatif (coeur, carreau, pique, trèfle, SA, TA ; n'influe pas sur le score), enchère (rien, coinché, surcoinché), fait ou chuté, belote-rebelote (oui/non, créditée à l'équipe qui prend), aperçu des points avant validation.
-- **Écran de partie** : gros score, progression vers l'objectif, numéro de la prochaine mène, tableau des mènes (contrat + symbole de l'atout s'il a été saisi) avec étiquettes (Fait, Chuté, Coinché, Belote), annulation de la dernière mène.
+- **Saisie d'une mène** (modal) : équipe preneuse, contrat (80 à 160, capot, générale), atout facultatif (coeur, carreau, pique, trèfle, SA, TA ; n'influe pas sur le score), enchère (rien, coinché, surcoinché), fait ou chuté, aperçu des points avant validation.
+- **Écran de partie** : gros score, progression vers l'objectif, numéro de la prochaine mène, tableau des mènes (contrat + symbole de l'atout s'il a été saisi) avec étiquettes (Fait, Chuté, Coinché), annulation de la dernière mène.
 - **Fin de partie** : vainqueur, courbe d'évolution du score, stats (coinches, capots, meilleure mène), revanche en un tap, partage du résultat.
-- **Fil** : stats globales, carte de la partie en cours, parties terminées façon Strava.
-- **Profil** : parties, mènes, % de parties gagnées, % de mènes gagnées, coinches, capots. Les victoires (Fil et Profil) sont comptées du point de vue de l'équipe 1, qui doit être celle du propriétaire du téléphone.
+- **Fil** : stats globales (parties, victoires, % de parties gagnées), carte de la partie en cours, parties terminées façon Strava.
+- **Profil** : parties, mènes, % de parties gagnées, % de mènes gagnées, coinches, capots. Les victoires et les capots (capots et générales réussis) sont comptés du point de vue de l'équipe 1, qui doit être celle du propriétaire du téléphone.
 
 ### Règles de score
 
@@ -23,7 +23,7 @@ Compteur de points complet, stocké localement sur le téléphone :
 | Contrat chuté | la défense marque 160 (320 coinché, 640 surcoinché) |
 | Capot | vaut 250 points |
 | Générale | capot réalisé par un seul joueur, vaut 500 points |
-| Belote-rebelote | toujours comptée : +20 pour l'équipe qui prend, même si le contrat chute |
+| Belote-rebelote | non comptée (pas de +20) |
 | Fin de partie | la première équipe à atteindre l'objectif gagne. Si les deux le dépassent sur la même mène, le plus gros score gagne (égalité : on continue) |
 
 Toute la logique est dans `src/features/coinche/scoring.ts` (fonctions pures).
@@ -41,7 +41,7 @@ Toute la logique est dans `src/features/coinche/scoring.ts` (fonctions pures).
 src/
   app/                      # routes (Expo Router)
     _layout.tsx             # stack racine
-    (tabs)/                 # Fil, Jouer, Profil
+    (tabs)/                 # index = Nouvelle partie (écran d'accueil), feed = Fil, profile = Profil
     game/[id]/index.tsx     # écran de partie
     game/[id]/round.tsx     # saisie d'une mène (modal)
     game/[id]/result.tsx    # fin de partie (plein écran)
@@ -70,6 +70,16 @@ xed ios                            # puis Product > Archive, destination "Any iO
 ```
 
 À chaque nouvel envoi, incrémenter `ios.buildNumber` dans `app.json` (et `version` pour une nouvelle version publique), puis refaire le prebuild.
+
+**iPad supporté** (`ios.supportsTablet: true`) : portrait sur iPhone, toutes orientations sur iPad (`UISupportedInterfaceOrientations~ipad`, requis pour le multitâche iPad). App Store Connect exige donc aussi des **captures iPad 13"**. Attention : une fois publiée avec le support iPad, Apple ne permet plus de le retirer.
+
+### Captures App Store
+
+`store/screenshots/iphone-6.5/` : 3 captures iPhone 6,5" (1284 x 2778, simulateur iPhone 13 Pro Max), le format demandé par App Store Connect. `store/screenshots/iphone-6.9/` : les mêmes en 6,9" (1320 x 2868, iPhone 17 Pro Max). Build Release. Données fictives cohérentes générées par `store/screenshots/seed.mjs` (état AsyncStorage `coinche-games` à copier dans `Library/Application Support/com.czernichow.coinche/RCTAsyncLocalStorage_V1/manifest.json` du conteneur de l'app), écrans ouverts par deep link (`coinche:///feed`, `coinche:///game/<id>`, `coinche:///game/<id>/result`).
+
+### Écrans supportés
+
+Mise en page vérifiée de 320 px (petit Android) à l'iPad 13" paysage : contenu centré à `MaxContentWidth` (640), safe areas lues via `useSafeAreaInsets` dans `Screen` (gauche/droite toujours protégés), textes longs tronqués ou rétrécis (`adjustsFontSizeToFit`). Le grossissement du texte système est plafonné à `MaxFontScale` (1.4) dans `ThemedText` et les `TextInput`.
 
 ### Site (GitHub Pages)
 

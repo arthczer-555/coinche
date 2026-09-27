@@ -14,10 +14,10 @@ export default function AppTabs() {
       <TabSlot style={styles.slot} />
       <TabList asChild>
         <FloatingTabList>
-          <TabTrigger name="index" href="/" asChild>
+          <TabTrigger name="feed" href="/feed" asChild>
             <TabButton icon="house" label="Fil" />
           </TabTrigger>
-          <TabTrigger name="play" href="/play" asChild>
+          <TabTrigger name="index" href="/" asChild>
             <PlayButton />
           </TabTrigger>
           <TabTrigger name="profile" href="/profile" asChild>

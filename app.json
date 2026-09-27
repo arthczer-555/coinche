@@ -10,7 +10,7 @@
     "ios": {
       "bundleIdentifier": "com.czernichow.coinche",
       "appleTeamId": "C49X7A285F",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false

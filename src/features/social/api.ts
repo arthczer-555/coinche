@@ -1,6 +1,6 @@
 import { profileToSeat } from '@/features/auth/session';
 import type { Game, Seat } from '@/features/coinche/types';
-import { ELO_START, type EloSnapshot } from '@/features/stats/elo';
+import { ELO_START, type EloSnapshot, type RatedPlayer } from '@/features/stats/elo';
 import { FEED_SELECT, GAME_SELECT, rowToGame, type FeedRow, type GameRow } from '@/features/sync/mappers';
 import type { Database, Profile } from '@/lib/database.types';
 import { requireSupabase } from '@/lib/supabase';
@@ -449,6 +449,35 @@ export async function fetchEloSnapshot(gameIds: string[], profileIds: string[]):
   return {
     current: Object.fromEntries((ratings.data ?? []).map((r) => [r.profile_id, r.elo])),
     before: Object.fromEntries((history.data ?? []).map((h) => [`${h.game_id}:${h.profile_id}`, h.elo_before])),
+  };
+}
+
+/** Cotes des joueurs d'une table classée : l'enjeu au lancement, ce que chacun a gagné à la fin. */
+export type TableRatings = {
+  /** Cote actuelle et parties classées de chaque joueur demandé (1000 et 0 s'il n'a jamais été classé). */
+  current: Record<string, RatedPlayer>;
+  /** Cote avant et après la partie, par joueur, une fois que la base l'a classée (elo_history). */
+  rated: Record<string, { before: number; after: number }>;
+};
+
+export async function fetchTableRatings(profileIds: string[], gameId: string | null): Promise<TableRatings> {
+  const sb = requireSupabase();
+  const [ratings, history] = await Promise.all([
+    sb.from('ratings').select('profile_id, elo, games').in('profile_id', profileIds),
+    gameId
+      ? sb.from('elo_history').select('profile_id, elo_before, elo_after').eq('game_id', gameId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const error = ratings.error ?? history.error;
+  if (error) throw error;
+  return {
+    current: Object.fromEntries(
+      profileIds.map((id) => {
+        const row = ratings.data?.find((r) => r.profile_id === id);
+        return [id, { elo: row?.elo ?? ELO_START, games: row?.games ?? 0 }];
+      }),
+    ),
+    rated: Object.fromEntries((history.data ?? []).map((h) => [h.profile_id, { before: h.elo_before, after: h.elo_after }])),
   };
 }
 

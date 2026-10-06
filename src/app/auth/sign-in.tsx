@@ -15,6 +15,7 @@ import { isAppleSignInAvailable, signInWithApple, signInWithPassword, signUpWith
 import { MIN_PASSWORD_LENGTH, signUpError, suggestUsername } from '@/features/auth/credentials';
 import { waitForProfile } from '@/features/auth/wait-for-profile';
 import { SuitIcon } from '@/features/coinche/components/suit-icon';
+import { usePrefs } from '@/features/onboarding/prefs';
 import { track } from '@/lib/analytics';
 
 type Mode = 'signup' | 'login';
@@ -53,8 +54,11 @@ export default function SignInScreen() {
     }
   }
 
-  async function finish() {
+  /** `created` : le compte vient d'être créé ici (une connexion Apple sans pseudo choisi en est un aussi). */
+  async function finish(created = false) {
     const profile = await waitForProfile();
+    // Le tour d'après l'inscription ne suit qu'une création de compte, sur ce téléphone : jamais une simple connexion.
+    if (profile && (created || !profile.onboarded)) usePrefs.getState().setTourPending(profile.id);
     if (profile && !profile.onboarded) {
       router.replace({ pathname: '/account/edit', params: { welcome: '1' } });
     } else {
@@ -80,7 +84,7 @@ export default function SignInScreen() {
       if (invalid) throw new Error(invalid);
       await signUpWithPassword(form);
       track('onboarding_completed');
-      await finish();
+      await finish(true);
     });
 
   const logIn = () =>

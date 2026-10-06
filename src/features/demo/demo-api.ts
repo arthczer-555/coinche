@@ -12,7 +12,7 @@ import type { Profile } from '@/lib/database.types';
 import {
   comments,
   demoId,
-  eloBefore,
+  eloHistory,
   friendships,
   games as fixtureGames,
   groups,
@@ -157,6 +157,7 @@ type SocialApi = Pick<
   | 'fetchPlayerGames'
   | 'fetchProfile'
   | 'fetchRating'
+  | 'fetchTableRatings'
   | 'fetchUnreadCount'
   | 'isUsernameAvailable'
   | 'joinGroup'
@@ -353,8 +354,15 @@ export const demoApi: SocialApi = {
     wait({
       current: Object.fromEntries(profileIds.flatMap((id) => (ratings.has(id) ? [[id, ratings.get(id)!.elo]] : []))),
       before: Object.fromEntries(
-        gameIds.flatMap((g) => profileIds.flatMap((p) => (eloBefore.has(`${g}:${p}`) ? [[`${g}:${p}`, eloBefore.get(`${g}:${p}`)!]] : []))),
+        gameIds.flatMap((g) => profileIds.flatMap((p) => (eloHistory.has(`${g}:${p}`) ? [[`${g}:${p}`, eloHistory.get(`${g}:${p}`)!.before]] : []))),
       ),
+    }),
+  fetchTableRatings: (profileIds, gameId) =>
+    wait({
+      current: Object.fromEntries(
+        profileIds.map((id) => [id, { elo: ratings.get(id)?.elo ?? 1000, games: ratings.get(id)?.games ?? 0 }]),
+      ),
+      rated: Object.fromEntries(profileIds.flatMap((id) => (eloHistory.has(`${gameId}:${id}`) ? [[id, eloHistory.get(`${gameId}:${id}`)!]] : []))),
     }),
   fetchRating: (profileId): Promise<social.Rating> => {
     const r = ratings.get(profileId);

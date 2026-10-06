@@ -29,7 +29,7 @@ function welcomePending(): boolean {
 /**
  * À monter dans le layout des onglets. Ouvre :
  * - au premier lancement, l'accueil en trois cartes ;
- * - avec un compte tout neuf, le tour d'après l'inscription (`/onboarding`), dès qu'on revient sur les onglets :
+ * - avec un compte créé sur ce téléphone, le tour d'après l'inscription (`/onboarding`), dès qu'on revient sur les onglets :
  *   après la connexion, l'écran d'accueil du profil ou la récupération des parties d'invité, sans les couper.
  */
 export function useIntroScreens() {
@@ -49,8 +49,8 @@ export function useIntroScreens() {
     return afterHydration(() => {
       const prefs = usePrefs.getState();
       // L'accueil passe d'abord : le tour suivra au retour sur les onglets.
-      if (welcomePending() || !needsTour(profile, prefs.tourSeenBy)) return;
-      prefs.markTourSeen(profile.id);
+      if (welcomePending() || !needsTour(profile, prefs.tourPendingFor)) return;
+      prefs.setTourPending(null);
       router.push('/onboarding');
     });
   }, [focused, profile]);

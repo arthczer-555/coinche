@@ -14,6 +14,7 @@ import { plural } from '@/features/coinche/format';
 import { gameStats, isFinished, isStoppedEarly, otherTeam, teamOf, totalScore } from '@/features/coinche/scoring';
 import { useGame, useGames } from '@/features/coinche/store';
 import type { Game } from '@/features/coinche/types';
+import { EloGains } from '@/features/players/components/elo-gains';
 import { GuestInvites } from '@/features/players/components/guest-invites';
 import { GamePhoto } from '@/features/social/components/game-photo';
 import { GameShareCard } from '@/features/social/components/share-cards';
@@ -21,7 +22,7 @@ import { queryClient } from '@/features/social/queries';
 import { shareAsImage } from '@/features/social/share';
 import { syncNow } from '@/features/sync/sync';
 
-/** Écran de fin de partie : vainqueur, courbe du score, stats, puis continuer, revanche ou partage. */
+/** Écran de fin de partie : vainqueur, gains d'Elo (partie classée), courbe du score, stats, puis continuer, revanche ou partage. */
 export default function ResultScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const game = useGame(id);
@@ -119,6 +120,8 @@ export default function ResultScreen() {
           </ThemedText>
         </View>
       </View>
+
+      {me.signedIn && game.ranked ? <EloGains game={game} /> : null}
 
       <ScoreChart game={game} />
 

@@ -412,8 +412,8 @@ export const notifications: DemoNotification[] = (() => {
 export type DemoRating = { elo: number; games: number; wins: number; bestElo: number; history: number[] };
 
 export const ratings = new Map<string, DemoRating>();
-/** Cote de chaque joueur avant chaque partie classée (`<partie>:<joueur>`), comme elo_history.elo_before. */
-export const eloBefore = new Map<string, number>();
+/** Cote de chaque joueur avant et après chaque partie classée (`<partie>:<joueur>`), comme elo_history. */
+export const eloHistory = new Map<string, { before: number; after: number }>();
 for (const game of [...games].filter((g) => g.finishedAt && g.ranked).sort((x, y) => x.finishedAt!.localeCompare(y.finishedAt!))) {
   const get = (id: string) => {
     if (!ratings.has(id)) ratings.set(id, { elo: ELO_START, games: 0, wins: 0, bestElo: ELO_START, history: [ELO_START] });
@@ -427,7 +427,7 @@ for (const game of [...games].filter((g) => g.finishedAt && g.ranked).sort((x, y
   for (const team of ['A', 'B'] as const) {
     game.teams[team].players.forEach((p, index) => {
       const r = get(p.id);
-      eloBefore.set(`${game.id}:${p.id}`, r.elo);
+      eloHistory.set(`${game.id}:${p.id}`, { before: r.elo, after: next[team][index] });
       r.elo = next[team][index];
       r.bestElo = Math.max(r.bestElo, r.elo);
       r.games += 1;

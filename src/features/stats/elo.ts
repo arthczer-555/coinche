@@ -35,10 +35,14 @@ export function rateGame(
   teams: Record<TeamId, RatedPlayer[]>,
   result: { winner: TeamId | null; scoreA: number; scoreB: number; target: number },
 ): Record<TeamId, number[]> {
+  const scoreA = result.winner === 'A' ? 1 : result.winner === 'B' ? 0 : 0.5;
+  return nextElos(teams, scoreA, marginMultiplier(result.scoreA, result.scoreB, result.target));
+}
+
+/** `scoreA` : 1 si l'équipe A gagne, 0 si elle perd, 0,5 pour un nul. */
+function nextElos(teams: Record<TeamId, RatedPlayer[]>, scoreA: number, multiplier: number): Record<TeamId, number[]> {
   const average = (players: RatedPlayer[]) => players.reduce((sum, p) => sum + p.elo, 0) / players.length;
   const expectedA = expectedScore(average(teams.A), average(teams.B));
-  const scoreA = result.winner === 'A' ? 1 : result.winner === 'B' ? 0 : 0.5;
-  const multiplier = marginMultiplier(result.scoreA, result.scoreB, result.target);
   const next = (team: TeamId) =>
     teams[team].map((p) => {
       const k = p.games < ELO_NEW_GAMES ? ELO_K_NEW : ELO_K;
@@ -46,6 +50,27 @@ export function rateGame(
       return Math.max(ELO_FLOOR, p.elo + Math.round(k * multiplier * gain));
     });
   return { A: next('A'), B: next('B') };
+}
+
+/** Points gagnés en cas de victoire, perdus (valeur négative) en cas de défaite. */
+export type EloStake = { win: number; loss: number };
+
+/**
+ * Enjeu d'une partie classée pour chaque joueur, annoncé au lancement. Valeurs pour un écart de score
+ * de la moitié de l'objectif (x1) : une partie serrée en vaut la moitié, une raclée jusqu'à 1,5 fois plus.
+ */
+export function eloStakes(teams: Record<TeamId, RatedPlayer[]>): Record<TeamId, EloStake[]> {
+  const aWins = nextElos(teams, 1, 1);
+  const bWins = nextElos(teams, 0, 1);
+  return {
+    A: teams.A.map((p, i) => ({ win: aWins.A[i] - p.elo, loss: bWins.A[i] - p.elo })),
+    B: teams.B.map((p, i) => ({ win: bWins.B[i] - p.elo, loss: aWins.B[i] - p.elo })),
+  };
+}
+
+/** "+24", "−12" (signe moins typographique) ou "0". */
+export function formatEloDelta(delta: number): string {
+  return delta > 0 ? `+${delta}` : delta < 0 ? `−${-delta}` : '0';
 }
 
 /** Cotes utiles pour afficher le niveau des équipes d'une liste de parties. */

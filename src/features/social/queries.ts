@@ -61,6 +61,7 @@ export const queryKeys = {
   friends: (profileId: string) => ['friends', profileId] as const,
   friendSuggestions: (profileId: string) => ['friend-suggestions', profileId] as const,
   rating: (profileId: string) => ['rating', profileId] as const,
+  tableRatings: (profileIds: string[], gameId: string | null) => ['table-ratings', profileIds, gameId] as const,
   leaderboard: (scope: string, since: string | null) => ['leaderboard', scope, since] as const,
   groups: (profileId: string) => ['groups', profileId] as const,
   groupMembers: (groupId: string) => ['group-members', groupId] as const,
@@ -454,6 +455,27 @@ export function useRating(profileId: string | undefined) {
     queryKey: queryKeys.rating(profileId ?? ''),
     queryFn: () => api.fetchRating(profileId!),
     enabled: signedIn && !!profileId,
+  });
+}
+
+/** Relectures max (toutes les 4 s) en attendant que la base classe une partie terminée. */
+const RATED_POLLS = 15;
+
+/**
+ * Cotes des comptes d'une table classée : l'enjeu au lancement, ce que chacun a gagné à la fin.
+ * Avec `gameId`, on relit toutes les 4 s tant que la base n'a pas classé la partie (la synchro prend quelques secondes).
+ */
+export function useTableRatings(players: Seat[], gameId: string | null = null) {
+  const signedIn = useSignedIn();
+  const profileIds = [...new Set(players.filter((p) => p.kind === 'user' && isUuid(p.id)).map((p) => p.id))].sort();
+  return useQuery({
+    queryKey: queryKeys.tableRatings(profileIds, gameId),
+    queryFn: () => api.fetchTableRatings(profileIds, gameId),
+    enabled: signedIn && profileIds.length > 0,
+    refetchInterval: (query) =>
+      gameId && query.state.data && Object.keys(query.state.data.rated).length === 0 && query.state.dataUpdateCount < RATED_POLLS
+        ? 4000
+        : false,
   });
 }
 

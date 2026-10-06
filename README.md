@@ -6,8 +6,8 @@ Le "Strava de la belote coinchée" : une app mobile pour compter les points de s
 
 ## Branches et versions
 
-- `master` : **v1.0**, compteur 100 % local, en cours de soumission sur l'App Store.
-- `social` : **v1.1**, l'app sociale complète : comptes, joueurs tagués, profils, amis, fil façon Strava, bravos, commentaires, notifications, cote Elo, classements, badges, bandes, parties en direct, récap annuel (phases 0 à 6 de [PLAN.md](PLAN.md)). Fonctionne aussi sans backend configuré (retombe sur le mode local de la v1.0).
+- `master` : **v1.1**, l'app sociale complète : comptes, joueurs tagués, profils, amis, fil façon Strava, bravos, commentaires, notifications, cote Elo, classements, badges, bandes, parties en direct, récap annuel (phases 0 à 6 de [PLAN.md](PLAN.md)). Fonctionne aussi sans backend configuré (retombe sur le mode local de la v1.0). Développée sur `social`, fusionnée dans `master` le 6 octobre 2026.
+- La **v1.0** (compteur 100 % local, soumise sur l'App Store) correspond au commit `3b9e6ee`.
 
 ## Fonctionnalités
 
@@ -20,7 +20,7 @@ Le "Strava de la belote coinchée" : une app mobile pour compter les points de s
 - **Fil** : stats globales (parties, victoires, % de parties gagnées), carte de la partie en cours, parties terminées façon Strava.
 - **Profil** : parties, mènes, % de parties gagnées, % de mènes gagnées, coinches, capots.
 
-### Social (v1.1, branche `social`)
+### Social (v1.1)
 
 - **Comptes** : prénom, nom, pseudo (`@arthur.c`) et mot de passe (8 caractères min.), **sans e-mail** ; connexion avec le pseudo et le mot de passe. Ou "Se connecter avec Apple" sur iPhone (écran d'accueil ensuite pour choisir son nom et son pseudo). Mot de passe oublié : on écrit au contact, réinitialisation à la main (voir plus bas). **Le compte reste facultatif** : sans compte, l'app marche comme la v1.0.
 - **Joueurs à la table** : sur "Nouvelle partie", 2 places par équipe. Pour chaque place : moi, un habitué (joueurs déjà croisés, triés par fréquence), **n'importe quel compte, ami ou pas** (recherche par nom ou `@pseudo`, sans tenir compte des accents, pseudo exact puis amis d'abord ; le pseudo est unique et distingue deux joueurs du même nom), le **QR code** de son profil (scan caméra), ou un **invité** (juste un prénom). Les noms d'équipe se génèrent tout seuls ("Arthur & Léa") et restent modifiables. Joueurs et visibilité modifiables après coup (menu "…" > Joueurs et visibilité).
@@ -43,14 +43,14 @@ Le "Strava de la belote coinchée" : une app mobile pour compter les points de s
 - **"Tu les connais peut-être"** : amis de mes amis, sans lien avec moi ni blocage, triés par nombre d'amis en commun (fonction `friend_suggestions()`), avec "En commun : Léa, Paul et 2 autres". Carrousel dans l'onglet "Amis", liste complète dans "Trouver" (départage par parties jouées ensemble ; "Tu as joué avec eux" ne les répète pas). Après "Ajouter", la carte reste avec "Envoyée" jusqu'au prochain passage.
 - **Modération** (exigence Apple 1.2) : signaler un profil / une partie / un commentaire, bloquer un joueur (liste dans Réglages), filtre de grossièretés côté app et côté base.
 - **Photo de profil**.
-- **Parties classées** : au lancement (Nouvelle partie), choix "Amicale" ou "Classée". Classée n'est possible qu'avec 4 comptes à la table, tous amis avec celui qui compte les points (l'anti-triche, puisque les parties arrivent sans validation) : un petit avertissement l'explique et liste les joueurs à ajouter en amis directement sur place (la liste se met à jour toute seule quand ils acceptent). Le bouton Distribuer reste grisé tant que ce n'est pas bon. Étiquette "Classée" sur la partie ; l'écran Joueurs redit si elle comptera encore. La base revérifie tout à la fin (personne n'a dit "Pas moi", toujours amis).
+- **Parties classées** : au lancement (Nouvelle partie), choix "Amicale" ou "Classée". Classée n'est possible qu'avec 4 comptes à la table, tous amis avec celui qui compte les points (l'anti-triche, puisque les parties arrivent sans validation) : un petit avertissement l'explique et liste les joueurs à ajouter en amis directement sur place (la liste se met à jour toute seule quand ils acceptent). Le bouton Distribuer reste grisé tant que ce n'est pas bon. Une fois les 4 comptes à la table, la carte annonce **l'enjeu** : pour chaque joueur, sa cote, ce qu'il gagne en cas de victoire et perd en cas de défaite (pour un écart de score moyen). Étiquette "Classée" sur la partie ; l'écran Joueurs redit si elle comptera encore. À la fin, l'écran de résultat montre **la cote de chacun avant → après et son gain** (chiffres de la base une fois la partie classée, le même calcul fait sur le téléphone en attendant la synchro), ou pourquoi la partie ne compte pas. La base revérifie tout à la fin (personne n'a dit "Pas moi", toujours amis).
 - **Cote Elo** (formule dans `features/stats/elo.ts`, identique en SQL dans `try_rate_game`) : départ à 1000, une équipe vaut la moyenne de ses deux joueurs ; échelle de 800 points au lieu de 400 et K = 96 sur les 10 premières parties classées puis 64, pour que les cotes s'écartent vraiment (simulé : écart type à peu près doublé par rapport à l'Elo classique, ~180 après 15 parties, ~320 après 60) ; l'écart de score compte (x0,5 partie serrée à x1,5 raclée) ; plancher à 100. Cote en grand à côté du nom sur les profils ("provisoire" avant 10 parties classées), courbe d'évolution, et **cote moyenne de chaque équipe** sur les cartes du Fil (celle d'avant la partie si elle a été classée, sinon la cote actuelle ; rien pour une équipe avec un invité).
 - **Classements** (onglet) : amis, ma ville, tous ; cote, victoires ou % de victoires ; semaine, mois, saison (trimestre), toujours.
 - **Profil enrichi** : défis du mois, activité sur 12 semaines, réussite par hauteur de contrat, records (remontée, victoire éclair, plus grosse mène, fanny), 14 badges avec progression, face-à-face (toi et ce joueur, ensemble / contre).
 - **Bandes** (onglet) : créer, rejoindre par code ou lien, classement du mois de la bande, parties de la bande, membres (admin : retirer). On range une partie dans une bande au lancement.
 - **Partage en image** : carte de la partie (écran de fin) et récap "Ma saison" (Profil), au format story.
-- **Accueil** au premier lancement (3 cartes).
-- **Petit tour après l'inscription** (`/onboarding`, plein écran vert) : ma carte de joueur avec mon QR code, "Remplis ta table" (trouver ses potes, inviter par lien), puis activer les notifications (seulement sur iPhone, si la permission n'a jamais été demandée). Il s'ouvre au retour sur les onglets, une fois le pseudo choisi, pour un compte créé il y a moins de 24 h et pas encore vu sur ce téléphone (`features/onboarding/use-intro.ts`) : il ne coupe donc ni la connexion, ni l'écran d'accueil du profil, ni la récupération des parties d'invité. "Passer" à tout moment. En démo (compte ancien), il ne se déclenche pas : ouvrir `/onboarding` à la main dans le navigateur.
+- **Accueil** au premier lancement (`welcome.tsx`) : 3 cartes illustrées (feuille de marque, table taguée, partie dans le fil), « Suivant » ou glisser, puis la page de connexion (fermable pour jouer sans compte). En démo : ouvrir `/welcome` à la main.
+- **Petit tour après l'inscription** (`/onboarding`, plein écran vert) : ma carte de joueur avec mon QR code, "Remplis ta table" (trouver ses potes, inviter par lien), puis activer les notifications (seulement sur iPhone, si la permission n'a jamais été demandée). Il s'ouvre au retour sur les onglets, une fois le pseudo choisi, seulement sur le téléphone où le compte vient d'être créé, jamais après une simple connexion (drapeau `tourPendingFor` posé par `auth/sign-in`, lu par `features/onboarding/use-intro.ts`) : il ne coupe donc ni la connexion, ni l'écran d'accueil du profil, ni la récupération des parties d'invité. "Passer" à tout moment. En démo (compte ancien), il ne se déclenche pas : ouvrir `/onboarding` à la main dans le navigateur.
 - **Mesure d'usage** facultative (PostHog UE, désactivée sans clé) sur l'entonnoir : partie lancée, invité, invité converti, bravo, commentaire, bande.
 
 ### Règles de score
@@ -112,7 +112,7 @@ src/
     social/                   # appels Supabase (api.ts), hooks TanStack Query (queries.ts), partage texte / image (share.ts)
     stats/                    # stats par joueur, records, badges, activité, défis du mois, récap annuel, périodes
     notifications/            # push (jeton, permission, ouverture au tap) ; push.web.ts : sans effet sur le web
-    onboarding/               # préférences locales (accueil vu, tour vu, id d'installation), déclenchement de l'accueil et du tour
+    onboarding/               # préférences locales (accueil vu, tour à montrer, id d'installation), déclenchement de l'accueil et du tour
     sync/                     # conversion app <-> base, envoi / récupération des parties
   lib/                        # client Supabase, types de la base, mesure d'usage
   components/                 # UI partagée (Button, Icon, Card, Segmented, OptionChip, Tag, Screen, Section, AppTabs, confirm + Dialog du web)
@@ -221,7 +221,7 @@ Mise en page vérifiée de 320 px (petit Android) à l'iPad 13" paysage : conten
 Le dossier `docs/` contient le mini-site statique servi par GitHub Pages (Settings > Pages > branche par défaut, dossier `/docs`) :
 
 - `index.html` : présentation + FAQ support, sert d'**URL de support** dans App Store Connect.
-- `confidentialite.html` : **politique de confidentialité**. Sur `social`, version 1.1 (comptes, données collectées, hébergement Supabase UE, suppression). GitHub Pages sert `master` : elle ne sera en ligne qu'au merge, ce qui tombe bien.
+- `confidentialite.html` : **politique de confidentialité**, version 1.1 (comptes, données collectées, hébergement Supabase UE, suppression). GitHub Pages sert `master`.
 - `u.html`, `invite.html` et `join.html` : pages de redirection des liens partagés (profil, invité, bande) (`?id=<uuid>` vers `coinche://u/<id>` et `coinche://invite/<id>`). Un lien https passe partout (SMS, WhatsApp) contrairement au schéma de l'app. Le QR code du profil contient le lien `u.html` : scanné avec l'appareil photo il ouvre le profil, scanné dans l'app il assoit le joueur.
 - Adresse de contact (index et confidentialité) : renseignée. Plus tard : un domaine à nous pour les liens universels iOS (impossible sur `*.github.io/coinche`).
 - `style.css` : reprend les tokens "Bistrot" de `src/constants/theme.ts`.
@@ -247,7 +247,8 @@ Plan détaillé, état de chaque phase et choix techniques : [PLAN.md](PLAN.md).
 - [x] Brancher Supabase (projet `wkzgrkotgsqozkfmfouj`, `npm run supabase:setup`)
 - [ ] Tester à plusieurs téléphones avec de vrais comptes (inscription et connexion testées sur le serveur, pas encore le reste)
 - [x] Remplacer l'icône Pastis 51 (dame et roi de coeur)
-- [ ] Publier la 1.1 : build 3, fusion de `social` dans `master` (politique de confidentialité 1.1 en ligne), "Sign in with Apple" coché
+- [x] Fusion de `social` dans `master` (politique de confidentialité 1.1 en ligne), migration `simple_games` appliquée sur le serveur
+- [ ] Publier la 1.1 : archive du build 3, fiche App Privacy, compte de test pour la review, "Sign in with Apple" coché
 - [ ] Variante "points faits + annonce" : à trancher (règles de la table)
 - [ ] Thème sombre (refonte des styles, reportée)
 - [ ] Co-saisie d'une partie à plusieurs téléphones, connexion Google, `eas update`

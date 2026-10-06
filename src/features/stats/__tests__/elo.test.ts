@@ -1,4 +1,4 @@
-import { ELO_FLOOR, expectedScore, marginMultiplier, rateGame, teamElo } from '../elo';
+import { ELO_FLOOR, eloStakes, expectedScore, marginMultiplier, rateGame, teamElo } from '../elo';
 
 const fresh = { elo: 1000, games: 0 };
 const veteran = (elo: number) => ({ elo, games: 50 });
@@ -34,6 +34,23 @@ describe('rateGame', () => {
   it('jamais sous le plancher', () => {
     const result = rateGame({ A: [veteran(120), veteran(120)], B: [veteran(120), veteran(120)] }, { winner: 'B', scoreA: 0, scoreB: 2000, target: 1000 });
     expect(result.A).toEqual([ELO_FLOOR, ELO_FLOOR]);
+  });
+});
+
+describe('eloStakes', () => {
+  it('à cote égale : +48 / -48 pour un nouveau, +32 / -32 ensuite', () => {
+    expect(eloStakes({ A: [fresh, veteran(1000)], B: [fresh, veteran(1000)] })).toEqual({
+      A: [{ win: 48, loss: -48 }, { win: 32, loss: -32 }],
+      B: [{ win: 48, loss: -48 }, { win: 32, loss: -32 }],
+    });
+  });
+
+  it('le favori gagne peu et perd beaucoup, comme rateGame avec un écart de la moitié de l’objectif', () => {
+    const teams = { A: [veteran(1300), veteran(1300)], B: [veteran(900), veteran(900)] };
+    const stakes = eloStakes(teams);
+    expect(stakes.A[0].win).toBeLessThan(-stakes.A[0].loss);
+    expect(stakes.B[0].win).toBe(-stakes.A[0].loss);
+    expect(1300 + stakes.A[0].win).toBe(rateGame(teams, { winner: 'A', scoreA: 1000, scoreB: 500, target: 1000 }).A[0]);
   });
 });
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Coinche",
     "slug": "coinche",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "coinche",
@@ -10,7 +10,7 @@
     "ios": {
       "bundleIdentifier": "com.czernichow.coinche",
       "appleTeamId": "C49X7A285F",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
@@ -22,7 +22,8 @@
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -31,10 +32,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -44,13 +48,41 @@
         {
           "backgroundColor": "#F3EDE1",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 120
+          "imageWidth": 160
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La caméra sert à scanner le QR code du profil de ton partenaire pour l’ajouter à la partie.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Coinche utilise tes photos pour ta photo de profil et la photo de tes parties.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#1F4D3A"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5b0e238f-1839-4828-bc32-fabee118c56f"
+      }
     }
   }
 }

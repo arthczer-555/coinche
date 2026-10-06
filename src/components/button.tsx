@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View, type PressableProps } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 
 import { Icon, type IconName } from '@/components/icon';
 import { ThemedText } from '@/components/themed-text';
@@ -16,6 +16,12 @@ type ButtonProps = Omit<PressableProps, 'children'> & {
   /** Pour les boutons posés sur un fond sombre (vert). */
   onDark?: boolean;
 };
+
+/**
+ * Rôle d'un bloc cliquable qui contient lui-même des boutons (carte du fil, ligne de joueur + Ajouter).
+ * Sur le web, "button" devient un <button> HTML, qui ne peut pas contenir d'autres boutons.
+ */
+export const BlockRole = Platform.OS === 'web' ? 'link' : 'button';
 
 const VARIANTS: Record<Variant, { background: string; text: string; border?: string; sticker?: boolean }> = {
   primary: { background: Colors.primary, text: Colors.onPrimary, sticker: true },

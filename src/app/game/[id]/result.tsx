@@ -1,22 +1,34 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Share, StyleSheet, View } from 'react-native';
+import { useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, IconButton } from '@/components/button';
 import { Icon } from '@/components/icon';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Fonts, Radius, Spacing, Sticker } from '@/constants/theme';
+import { useMe } from '@/features/auth/session';
 import { ScoreChart } from '@/features/coinche/components/score-chart';
 import { plural } from '@/features/coinche/format';
-import { gameStats, isFinished, isStoppedEarly, otherTeam, totalScore } from '@/features/coinche/scoring';
+import { gameStats, isFinished, isStoppedEarly, otherTeam, teamOf, totalScore } from '@/features/coinche/scoring';
 import { useGame, useGames } from '@/features/coinche/store';
+import type { Game } from '@/features/coinche/types';
+import { EloGains } from '@/features/players/components/elo-gains';
+import { GuestInvites } from '@/features/players/components/guest-invites';
+import { GamePhoto } from '@/features/social/components/game-photo';
+import { GameShareCard } from '@/features/social/components/share-cards';
+import { queryClient } from '@/features/social/queries';
+import { shareAsImage } from '@/features/social/share';
+import { syncNow } from '@/features/sync/sync';
 
-/** Écran de fin de partie : vainqueur, courbe du score, stats, revanche et partage. */
+/** Écran de fin de partie : vainqueur, gains d'Elo (partie classée), courbe du score, stats, puis continuer, revanche ou partage. */
 export default function ResultScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const game = useGame(id);
   const rematch = useGames((s) => s.rematch);
+  const me = useMe();
+  const cardRef = useRef<View>(null);
 
   if (!game || !isFinished(game)) {
     return (
@@ -33,13 +45,14 @@ export default function ResultScreen() {
   const first = winner ?? 'A';
   const second = otherTeam(first);
   const score = totalScore(game);
-  const stats = gameStats(game);
+  const myTeam = teamOf(game, me.id);
+  const stats = gameStats(game, myTeam);
   const winnerName = winner ? game.teams[winner].name : null;
   const headline = !winnerName
     ? 'Match nul'
-    : winnerName.toLowerCase() === 'nous'
-      ? 'Nous gagnons !'
-      : `${winnerName} gagne !`;
+    : myTeam === winner || winnerName.toLowerCase() === 'nous'
+      ? 'Victoire !'
+      : `${winnerName} gagne${game.teams[winner!].players.length > 1 ? 'nt' : ''} !`;
   const status = isStoppedEarly(game) ? 'Partie arrêtée' : 'Partie terminée';
 
   function playAgain() {
@@ -49,16 +62,24 @@ export default function ResultScreen() {
     router.push({ pathname: '/game/[id]', params: { id: newId } });
   }
 
-  async function share() {
-    try {
-      await Share.share({
-        message: winnerName
-          ? `🏆 ${winnerName} remporte la partie de coinche ${score[first]} à ${score[second]} (${game!.teams.A.name} vs ${game!.teams.B.name}, ${plural(stats.rounds, 'mène')}).`
-          : `🤝 Match nul ${score.A} partout entre ${game!.teams.A.name} et ${game!.teams.B.name} à la coinche (${plural(stats.rounds, 'mène')}).`,
+  /** Ferme la partie et la poste dans le fil (selon sa visibilité), sans rien envoyer aux autres. */
+  function done() {
+    if (router.canDismiss()) router.dismissAll();
+    router.navigate('/feed');
+    // La synchro auto attend quelques secondes : on envoie tout de suite, puis le fil se relit depuis le serveur.
+    void syncNow()
+      .catch(() => undefined)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['group-feed'] });
       });
-    } catch {
-      // Partage indisponible (web sans Web Share API) : rien à faire.
-    }
+  }
+
+  function share() {
+    const text = winnerName
+      ? `🏆 ${winnerName} remporte la partie de coinche ${score[first]} à ${score[second]} (${game!.teams.A.name} vs ${game!.teams.B.name}, ${plural(stats.rounds, 'mène')}).`
+      : `🤝 Match nul ${score.A} partout entre ${game!.teams.A.name} et ${game!.teams.B.name} à la coinche (${plural(stats.rounds, 'mène')}).`;
+    shareAsImage(cardRef, text);
   }
 
   return (
@@ -74,8 +95,11 @@ export default function ResultScreen() {
       }
       footer={
         <View style={styles.actions}>
-          <Button label="Revanche" variant="secondary" onPress={playAgain} />
-          <Button label="Partager le résultat" variant="outline" icon="share" onDark onPress={share} />
+          <Button label="Continuer" variant="secondary" trailingIcon="arrow-right" onPress={done} />
+          <View style={styles.secondaryActions}>
+            <Button label="Revanche" variant="outline" icon="swap" onDark onPress={playAgain} style={styles.half} />
+            <Button label="Partager" variant="outline" icon="share" onDark onPress={share} style={styles.half} />
+          </View>
         </View>
       }>
       <View style={styles.hero}>
@@ -97,6 +121,8 @@ export default function ResultScreen() {
         </View>
       </View>
 
+      {me.signedIn && game.ranked ? <EloGains game={game} /> : null}
+
       <ScoreChart game={game} />
 
       <View style={styles.stats}>
@@ -104,7 +130,46 @@ export default function ResultScreen() {
         <Stat value={String(stats.capots)} label={stats.capots > 1 ? 'capots' : 'capot'} />
         <Stat value={`+${stats.bestRound}`} label="meilleure mène" />
       </View>
+
+      {/* Le récit se raconte à la fin, avant de partager : il faut un compte, la photo part sur le serveur. */}
+      {me.signedIn && game.ownerId === me.id && !game.simple ? <StoryPrompt game={game} /> : null}
+
+      <GuestInvites game={game} onDark />
+
+      {/* Carte image capturée au partage, rendue hors de l'écran. */}
+      <View style={styles.offscreen}>
+        <GameShareCard ref={cardRef} game={game} />
+      </View>
     </Screen>
+  );
+}
+
+/** Récit de la partie : une photo de la tablée, un mot, le lieu. */
+function StoryPrompt({ game }: { game: Game }) {
+  const hasStory = Boolean(game.note || game.location || game.photoPath);
+  const details = [game.location, game.note].filter(Boolean).join(' · ');
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/game/[id]/story', params: { id: game.id } })}
+      style={({ pressed }) => [styles.story, !hasStory && styles.storyEmpty, pressed && styles.pressed]}>
+      {game.photoPath ? (
+        <GamePhoto path={game.photoPath} style={styles.storyPhoto} />
+      ) : (
+        <View style={styles.storyIcon}>
+          <Icon name="camera" size={22} color="#5E4812" />
+        </View>
+      )}
+      <View style={styles.storyText}>
+        <ThemedText type="smallBold" themeColor="onPrimary">
+          {hasStory ? 'Ton récit' : 'Ajoute une photo de la tablée'}
+        </ThemedText>
+        <ThemedText type="small" themeColor="onPrimaryMuted" numberOfLines={2}>
+          {hasStory ? details || 'Photo ajoutée' : 'Un mot, le lieu : la touche finale avant de partager.'}
+        </ThemedText>
+      </View>
+      <Icon name={hasStory ? 'pencil' : 'chevron-right'} size={18} color={Colors.onPrimaryMuted} />
+    </Pressable>
   );
 }
 
@@ -170,7 +235,56 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     padding: Spacing.three - Spacing.one,
   },
+  story: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    backgroundColor: Colors.primaryLight,
+    borderRadius: Radius.medium,
+    padding: Spacing.three - Spacing.one,
+  },
+  storyEmpty: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: Colors.onPrimaryMuted,
+  },
+  storyPhoto: {
+    width: 52,
+    height: 52,
+    aspectRatio: 1,
+    borderRadius: Radius.small,
+  },
+  storyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storyText: {
+    flex: 1,
+    gap: 2,
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+  offscreen: {
+    position: 'absolute',
+    left: -10000,
+    top: 0,
+    pointerEvents: 'none',
+  },
   actions: {
     gap: Spacing.two + Spacing.one,
+  },
+  secondaryActions: {
+    flexDirection: 'row',
+    gap: Spacing.two + Spacing.one,
+  },
+  half: {
+    flex: 1,
+    paddingHorizontal: Spacing.two,
   },
 });

@@ -6,7 +6,7 @@ import { isFinished, isStoppedEarly, leader, totalScore } from './scoring';
 import { useGames } from './store';
 import type { Game } from './types';
 
-/** Menu "…" d'une partie : terminer maintenant, rouvrir, supprimer. */
+/** Menu "…" d'une partie : joueurs, récit, terminer maintenant, rouvrir, supprimer. */
 export function useGameMenu() {
   const finishGame = useGames((s) => s.finishGame);
   const reopenGame = useGames((s) => s.reopenGame);
@@ -32,6 +32,20 @@ export function useGameMenu() {
 
   return function openGameMenu(game: Game, options?: { onDeleted?: () => void }) {
     const actions: Action[] = [];
+    // Juste les points : personne à taguer, rien à raconter, la partie reste privée.
+    if (!game.simple) {
+      actions.push({
+        label: 'Joueurs et visibilité',
+        onPress: () => router.push({ pathname: '/game/[id]/players', params: { id: game.id } }),
+      });
+    }
+    // Le récit (photo, un mot, le lieu) se raconte une fois la partie finie.
+    if (game.ownerId && !game.simple && isFinished(game)) {
+      actions.push({
+        label: 'Raconter la partie',
+        onPress: () => router.push({ pathname: '/game/[id]/story', params: { id: game.id } }),
+      });
+    }
     if (!isFinished(game)) {
       actions.push({ label: 'Terminer maintenant', onPress: () => askFinish(game) });
     } else if (isStoppedEarly(game)) {

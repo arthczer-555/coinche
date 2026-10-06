@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card } from '@/components/card';
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { AvatarLink } from '@/features/players/components/avatar';
 
 import { isFinished, isStoppedEarly, totalScore } from '../scoring';
 import type { Game, TeamId } from '../types';
@@ -48,6 +49,14 @@ function TeamCard({ game, team, points, leader }: { game: Game; team: TeamId; po
         <SuitIcon suit={TEAM_SUIT[team]} size={14} color={color} />
       </View>
 
+      {game.teams[team].players.length > 0 ? (
+        // Côte à côte (pas empilés) : chaque avatar ouvre le profil du joueur, il faut une vraie cible au doigt.
+        <View style={styles.avatars}>
+          {game.teams[team].players.map((seat) => (
+            <AvatarLink key={seat.id} seat={seat} size={32} />
+          ))}
+        </View>
+      ) : null}
       <ThemedText type="smallBold" numberOfLines={1} style={styles.center}>
         {game.teams[team].name}
       </ThemedText>
@@ -98,6 +107,10 @@ const styles = StyleSheet.create({
     bottom: Spacing.two + Spacing.half,
     right: Spacing.two + Spacing.half,
     transform: [{ rotate: '180deg' }],
+  },
+  avatars: {
+    flexDirection: 'row',
+    gap: Spacing.one + Spacing.half,
   },
   center: {
     textAlign: 'center',

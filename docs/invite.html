@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coinche, invitation</title>
+  <meta name="description" content="Récupère tes parties de coinche sur ton profil.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#F3EDE1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231F4D3A'/%3E%3Cpath d='M16 6c-3 4-8 7-8 11a4 4 0 0 0 6.5 3.1L13 25h6l-1.5-4.9A4 4 0 0 0 24 17c0-4-5-7-8-11z' fill='%23E0482F'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&family=Fraunces:opsz,wght,SOFT,WONK@9..144,900,0..100,0..1&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="wrap topbar">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2c-2.4 3.2-7 5.6-7 9.2a3.4 3.4 0 0 0 5.6 2.6L9.5 19h5l-1.1-5.2a3.4 3.4 0 0 0 5.6-2.6C19 7.6 14.4 5.2 12 2z" fill="#E0482F"/></svg>
+      </span>
+      Coinche
+    </a>
+  </header>
+
+  <main class="wrap doc">
+    <h1>On t'a ajouté à une partie</h1>
+    <p class="lead">Un pote a compté vos points avec Coinche. Crée ton compte dans l'app pour récupérer la partie sur ton profil, avec tes stats.</p>
+    <p><a class="btn" id="open" href="./">Ouvrir dans l'app Coinche</a></p>
+    <p class="btn-note">Pas encore l'app ? Elle arrive bientôt sur l'App Store : <a href="./">découvrir Coinche</a>.</p>
+  </main>
+  <script>
+    // Lien partagé depuis l'app : on renvoie vers l'app (coinche://invite/<id>), sinon on reste sur cette page.
+    const id = new URLSearchParams(location.search).get('id') || '';
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+      const deepLink = 'coinche://invite/' + id.toLowerCase();
+      document.getElementById('open').href = deepLink;
+      location.href = deepLink;
+    }
+  </script>
+</body>
+</html>

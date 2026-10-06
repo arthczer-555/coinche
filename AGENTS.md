@@ -1,5 +1,17 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Web et mobile : chaque modification sur les deux
+
+L'app tourne sur iOS (cible principale, App Store) et sur le web. Le web sert à développer vite : `npm run dev` ouvre l'app dans le navigateur en mode démo (données fictives, sans serveur), et le même serveur Metro sert le development build iOS (touche `i`).
+
+- **Toute modification doit marcher sur mobile ET sur le web.** La vérifier dans le navigateur (`npm run dev`) en plus de `npm run check` (typecheck, lint, tests). Si un comportement ne peut pas exister sur le web, prévoir un équivalent ou un repli explicite, jamais un écran qui plante ou un bouton qui ne fait rien.
+- Petite différence : `Platform.OS` dans le même fichier. Module natif sans support web : fichier `.web.ts(x)` à côté, avec exactement les mêmes exports (ex. `features/notifications/push.web.ts`). Toute modification de l'un se reporte sur l'autre.
+- Pas d'`Alert.alert`, `ActionSheetIOS` ni `Share.share` en direct (ignorés sur le web) : passer par `confirm`, `notify`, `showActions` (`components/confirm.ts`, boîte de dialogue `components/dialog.tsx` sur le web) et `shareText`, `shareAsImage` (`features/social/share.ts`).
+- Un bloc cliquable qui contient d'autres boutons prend `accessibilityRole={BlockRole}` (`components/button.tsx`) : sur le web, `button` devient un `<button>` HTML, qui ne peut pas en contenir d'autres.
+- `pointerEvents` et ombres dans le style (`pointerEvents: 'none'`, `boxShadow`), pas en prop ni en `shadow*` (dépréciés sur le web).
+- Web en SPA (`web.output: "single"` dans `app.json`) : pas de rendu serveur, `window` et le stockage local sont toujours disponibles.
+- Absents du web : notifications push et connexion Apple (pseudo + mot de passe marchent). Le scan QR passe par la webcam.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
@@ -13,6 +25,8 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
 
 ```bash
+npm run dev                 # web (navigateur) + mode démo ; touche i pour iOS
+npm run check               # typecheck + lint + tests
 npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
 npx expo start              # start the dev server
 npx expo lint               # lint

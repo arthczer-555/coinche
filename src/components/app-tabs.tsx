@@ -17,8 +17,14 @@ export default function AppTabs() {
           <TabTrigger name="feed" href="/feed" asChild>
             <TabButton icon="house" label="Fil" />
           </TabTrigger>
+          <TabTrigger name="leaderboard" href="/leaderboard" asChild>
+            <TabButton icon="trophy" label="Classement" />
+          </TabTrigger>
           <TabTrigger name="index" href="/" asChild>
             <PlayButton />
+          </TabTrigger>
+          <TabTrigger name="groups" href="/groups" asChild>
+            <TabButton icon="users" label="Bandes" />
           </TabTrigger>
           <TabTrigger name="profile" href="/profile" asChild>
             <TabButton icon="user" label="Profil" />
@@ -32,7 +38,7 @@ export default function AppTabs() {
 function FloatingTabList({ style, ...props }: TabListProps) {
   const insets = useSafeAreaInsets();
   return (
-    <View pointerEvents="box-none" style={[styles.container, { paddingBottom: Math.max(insets.bottom, Spacing.three) }]}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, Spacing.three) }]}>
       <View {...props} style={[styles.bar, style]} />
     </View>
   );
@@ -47,7 +53,9 @@ function TabButton({ icon, label, isFocused, ...props }: TabTriggerSlotProps & {
       accessibilityState={{ selected: isFocused }}
       style={({ pressed }) => [styles.tab, pressed && styles.pressed]}>
       <Icon name={icon} size={20} color={color} strokeWidth={isFocused ? 2.2 : 1.8} />
-      <ThemedText style={[styles.label, { color }]}>{label}</ThemedText>
+      <ThemedText numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.label, { color }]}>
+        {label}
+      </ThemedText>
     </Pressable>
   );
 }
@@ -80,6 +88,7 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: Spacing.three + Spacing.one,
+    pointerEvents: 'box-none',
   },
   bar: {
     width: '100%',
@@ -91,11 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.ink,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.two,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
+    boxShadow: '0px 6px 16px rgba(0,0,0,0.18)',
   },
   tab: {
     flex: 1,

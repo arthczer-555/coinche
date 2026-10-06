@@ -13,11 +13,15 @@ export const COINCHE_MULTIPLIER: Record<Coinche, number> = {
   surcoinche: 4,
 };
 
-/** Équipe du joueur : l'équipe 1 (« Nous ») tant qu'il n'y a pas de comptes. */
-export const MY_TEAM: TeamId = 'A';
-
 export function otherTeam(team: TeamId): TeamId {
   return team === 'A' ? 'B' : 'A';
+}
+
+/** Équipe dans laquelle joue un joueur, ou null s'il n'était pas à la table. */
+export function teamOf(game: Game, playerId: string): TeamId | null {
+  if (game.teams.A.players.some((p) => p.id === playerId)) return 'A';
+  if (game.teams.B.players.some((p) => p.id === playerId)) return 'B';
+  return null;
 }
 
 export function bidPoints(bid: Bid): number {
@@ -114,13 +118,14 @@ export type GameStats = {
   roundsWon: Score;
   contractsMade: number;
   coinches: number;
-  /** Capots et générales réussis par mon équipe (MY_TEAM). */
+  /** Capots et générales réussis (par l'équipe `perspective`, ou par les deux équipes). */
   capots: number;
   /** Plus gros gain d'une équipe sur une seule mène. */
   bestRound: number;
 };
 
-export function gameStats(game: Game): GameStats {
+/** Stats d'une partie. `perspective` : l'équipe du joueur qui regarde (null = partie vue de l'extérieur). */
+export function gameStats(game: Game, perspective: TeamId | null = null): GameStats {
   return {
     rounds: game.rounds.length,
     roundsWon: {
@@ -130,7 +135,10 @@ export function gameStats(game: Game): GameStats {
     contractsMade: game.rounds.filter((r) => r.made).length,
     coinches: game.rounds.filter((r) => r.coinche !== 'none').length,
     capots: game.rounds.filter(
-      (r) => r.bidder === MY_TEAM && r.made && (r.bid === 'capot' || r.bid === 'generale'),
+      (r) =>
+        (perspective === null || r.bidder === perspective) &&
+        r.made &&
+        (r.bid === 'capot' || r.bid === 'generale'),
     ).length,
     bestRound: game.rounds.reduce((best, r) => {
       const s = scoreRound(r);

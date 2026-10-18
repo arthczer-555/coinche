@@ -166,6 +166,8 @@ npm run supabase:setup    # tout le reste
 
 **État : projet créé le 6 octobre 2026** sur le compte Supabase perso (organisation `arthczer-555`), ref `wkzgrkotgsqozkfmfouj`, région Paris, offre gratuite. Schéma, config Auth, fonction push et `.env.local` en place ; inscription et connexion par pseudo testées de bout en bout sur ce projet.
 
+**Mise en pause (offre gratuite).** Après 7 jours sans activité, Supabase met le projet en pause (statut `INACTIVE` dans `supabase projects list`) : le domaine ne répond plus et l'app affiche "vérifie ta connexion" à l'inscription comme à la connexion (arrivé le 18 octobre 2026). Relance : dashboard Supabase > projet > **Restore project**. Prévention : le workflow `.github/workflows/supabase-keepalive.yml` interroge la base chaque jour (secrets du dépôt `SUPABASE_URL` et `SUPABASE_KEY`, la clé publique de l'app) et échoue, donc prévient par e-mail, si le projet ne répond plus. GitHub désactive les workflows planifiés d'un dépôt public après 60 jours sans commit : il suffit alors de le réactiver dans l'onglet Actions. Avec de vrais utilisateurs, passer en offre Pro (plus de pause).
+
 `supabase/setup.sh` fait tout, et peut être relancé sans risque :
 
 1. Crée le projet `coinche` en région **Paris** (`eu-west-3`, ce qu'annonce la politique de confidentialité) s'il n'existe pas. Le mot de passe de la base est généré et gardé dans `.env.local`.

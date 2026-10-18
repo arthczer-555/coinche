@@ -1,0 +1,29 @@
+# L'offre gratuite de Supabase met le projet en pause après 7 jours sans activité : l'app ne joint
+# plus le serveur (inscription, connexion, fil). Une requête par jour à la base suffit à l'éviter.
+# Si elle échoue (projet déjà en pause), le workflow échoue et GitHub prévient par e-mail.
+# Secrets du dépôt : SUPABASE_URL et SUPABASE_KEY (clé publique, la même que dans l'app).
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 6 * * *' # tous les jours, vers 8 h à Paris
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Requête à la base
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          : "${SUPABASE_URL:?secret SUPABASE_URL manquant}" "${SUPABASE_KEY:?secret SUPABASE_KEY manquant}"
+          curl --fail-with-body --silent --show-error --retry 3 --retry-delay 10 \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/is_username_free" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"keepalive"}'

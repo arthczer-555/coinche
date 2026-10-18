@@ -10,7 +10,7 @@
     "ios": {
       "bundleIdentifier": "com.czernichow.coinche",
       "appleTeamId": "C49X7A285F",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "supportsTablet": true,
       "config": {
         "usesNonExemptEncryption": false
@@ -48,7 +48,7 @@
         {
           "backgroundColor": "#F3EDE1",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 160
+          "imageWidth": 180
         }
       ],
       "expo-apple-authentication",

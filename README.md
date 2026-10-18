@@ -210,7 +210,9 @@ xed ios                            # puis Product > Archive, destination "Any iO
 
 ### Captures App Store
 
-`store/screenshots/iphone-6.5/` : 3 captures iPhone 6,5" (1284 x 2778, simulateur iPhone 13 Pro Max), le format demandé par App Store Connect. `store/screenshots/iphone-6.9/` : les mêmes en 6,9" (1320 x 2868, iPhone 17 Pro Max). `store/screenshots/ipad-13/` : les mêmes en iPad 13" (2064 x 2752, simulateur iPad Pro 13" M5, portrait ; poignée de redimensionnement de fenêtre iPadOS 26 effacée en bas à droite). Build Release. Données fictives cohérentes générées par `store/screenshots/seed.mjs` (état AsyncStorage `coinche-games` à copier dans `Library/Application Support/com.czernichow.coinche/RCTAsyncLocalStorage_V1/manifest.json` du conteneur de l'app), écrans ouverts par deep link (`coinche:///feed`, `coinche:///game/<id>`, `coinche:///game/<id>/result`).
+Version 1.1, 5 captures dans cet ordre : Fil, partie en cours, fin de partie classée (gains d'Elo), Classements, profil d'un ami (Léa). `store/screenshots/iphone-6.5/` (1284 x 2778, simulateur iPhone 13 Pro Max), `iphone-6.9/` (1320 x 2868, iPhone 17 Pro Max), `iphone-6.3/` (1206 x 2622, iPhone 17 Pro), `ipad-13/` (2064 x 2752, iPad Pro 13" M5, portrait). Simulateurs dédiés "Coinche Shots 6.5", "Coinche Shots 6.9" et "Coinche Shots iPad 13".
+
+Build Release en **mode démo** (`EXPO_PUBLIC_DEMO=1 npx expo run:ios --configuration Release --device <udid> --no-bundler`, puis `xcrun simctl install` du même `.app` sur les autres simulateurs), puis `store/screenshots/capture.sh <udid> <dossier>` fait le reste : approuve le schéma `coinche` (deep links sans confirmation), amorce la démo, retouche la partie en cours dans le stockage local (Alex & Léa mènent 610 à 490), fige la barre d'état à 21:41, ouvre chaque écran par deep link, enregistre en RGB sans transparence et efface sur iPad la poignée de redimensionnement d'iPadOS 26.
 
 ### Écrans supportés
 
@@ -237,7 +239,7 @@ Le design compte. Direction **"Bistrot"** : l'univers "tapis de cartes" crème e
 - Titres et scores en **Fraunces Black arrondie** (instance statique SOFT 100 / WONK 1 générée depuis la police variable, dans `assets/fonts/`), texte courant en **Figtree** (la famille suit le `fontWeight`, géré dans `ThemedText`).
 - Tab bar flottante noire en pilule avec le bouton "Jouer" (pique rouge) au centre.
 - Thème clair uniquement pour l'instant (`userInterfaceStyle: light`). Tous les tokens sont dans `src/constants/theme.ts`.
-- Icône de l'app : dame et roi de coeur en éventail, chacun avec un gros coeur couronné (diadème pour la dame, couronne pour le roi), "Coinche" en Fraunces au-dessus avec un coeur à la place du point du i, sur fond blanc. Même style autocollant que l'app (contours encre, ombre décalée). `assets/images/icon.png`, déclinée en foreground/monochrome Android, splash (composition transparente sur le fond crème) et favicon (les deux cartes seules, le titre étant illisible en 48 px).
+- Icône de l'app : la dame et le roi de coeur en éventail, vus comme dans une main : les index des coins en grand (D et R en Fraunces rouge, un coeur dessous, répétés tête-bêche en bas), cartes blanches à contour encre et ombre décalée (style autocollant de l'app), sur fond blanc, sans texte (iOS affiche déjà le nom sous l'icône). `assets/images/icon.png`, déclinée en foreground/monochrome Android, splash (dessin transparent sur le fond crème) et favicon.
 
 ## Roadmap ("Strava de la coinche")
 

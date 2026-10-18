@@ -65,6 +65,7 @@ export default function CommentsScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen
+        automaticallyAdjustKeyboardInsets={false}
         edges={Platform.OS === 'ios' ? ['bottom'] : ['top', 'bottom']}
         header={
           <View>

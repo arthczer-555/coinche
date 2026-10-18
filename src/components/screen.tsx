@@ -47,6 +47,9 @@ export function Screen({
       ) : null}
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        // iOS : laisse la place du clavier et fait défiler jusqu'au champ actif. Les écrans déjà dans un
+        // KeyboardAvoidingView passent false (sinon le décalage compte deux fois).
+        automaticallyAdjustKeyboardInsets
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.content,
